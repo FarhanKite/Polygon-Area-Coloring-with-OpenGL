@@ -1,4 +1,3 @@
-
 attribute vec4 aPosition;
 
 void main() {
