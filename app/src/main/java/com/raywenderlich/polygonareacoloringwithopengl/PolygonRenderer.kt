@@ -56,7 +56,6 @@ class PolygonRenderer(
     private var selectedVertexIndex: Int? = null
     private var isPainting = false
 
-    // CPU-side snapshot of mask pixels — survives EGL context loss
     private var savedMaskPixels: ByteBuffer? = null
     var maskWasSaved = false
 
@@ -179,6 +178,11 @@ class PolygonRenderer(
 
         glBindFramebuffer(GL_FRAMEBUFFER, brushMaskFbo)
         glViewport(0, 0, surfaceWidth, surfaceHeight)
+
+        glEnable(GL_STENCIL_TEST)
+        glStencilFunc(GL_EQUAL, 1, 0xFF)
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP)
+
         glUseProgram(brushProgram)
         glEnable(GL_BLEND)
 
@@ -207,6 +211,8 @@ class PolygonRenderer(
         glDisableVertexAttribArray(brushPositionHandle)
         glDisableVertexAttribArray(brushTexCoordHandle)
         glDisable(GL_BLEND)
+
+        glDisable(GL_STENCIL_TEST)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glViewport(0, 0, surfaceWidth, surfaceHeight)
