@@ -64,9 +64,9 @@ class PolygonRenderer(
                 vertexBuffer.put(vertices).position(0)
                 triangleBuffer = GlBufferUtils.createFloatBuffer(triangulatedVertices)
             },
-            onPaintRequest = { glX, glY ->
+            onPaintRequest = { prevGlX, prevGlY, glX, glY ->
                 glSurfaceView?.queueEvent {
-                    brushStamper.stamp(glX, glY, viewModel, brushMaskFbo, surfaceWidth, surfaceHeight)
+                    brushStamper.stamp(prevGlX, prevGlY, glX, glY, viewModel, brushMaskFbo, surfaceWidth, surfaceHeight)
                 }
             },
             onStrokeEnded = {
@@ -91,8 +91,8 @@ class PolygonRenderer(
         drawVertexPoints()
     }
 
-    fun handleTouch(x: Float, y: Float, width: Int, height: Int) {
-        touchHandler.onTouch(x, y, width, height, triangulatedVertices)
+    fun handleTouch(prevX: Float, prevY: Float, x: Float, y: Float, width: Int, height: Int) {
+        touchHandler.onTouch(prevX, prevY, x, y, width, height, triangulatedVertices)
     }
 
     fun resetTouchedVertexIndex() {
@@ -189,6 +189,9 @@ class PolygonRenderer(
             colorUniform = glGetUniformLocation(brushProgram, "u_color"),
             hardnessUniform = glGetUniformLocation(brushProgram, "u_hardness"),
             opacityUniform = glGetUniformLocation(brushProgram, "u_opacity"),
+            prevPointUniform = glGetUniformLocation(brushProgram, "u_prevPoint"),
+            curPointUniform = glGetUniformLocation(brushProgram, "u_currPoint"),
+            brushRadius = glGetUniformLocation(brushProgram, "u_brushRadius"),
             programId = brushProgram
         )
     }

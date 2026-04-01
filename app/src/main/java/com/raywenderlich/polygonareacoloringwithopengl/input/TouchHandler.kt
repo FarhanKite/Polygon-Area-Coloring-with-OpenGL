@@ -1,5 +1,6 @@
 package com.raywenderlich.polygonareacoloringwithopengl.input
 
+import android.R.attr.x
 import com.raywenderlich.polygonareacoloringwithopengl.data.PolygonData.vertices
 import com.raywenderlich.polygonareacoloringwithopengl.geometry.PolygonTriangulator
 import com.raywenderlich.polygonareacoloringwithopengl.gl.CoordUtils
@@ -8,14 +9,14 @@ import kotlin.math.sqrt
 
 class TouchHandler(
     private val onVertexMoved: (triangulatedVertices: FloatArray) -> Unit,
-    private val onPaintRequest: (glX: Float, glY: Float) -> Unit,
+    private val onPaintRequest: (prevGlX: Float, prevGlY: Float, glX: Float, glY: Float) -> Unit,
     private val onStrokeEnded: () -> Unit
 ) {
 
     private var selectedVertexIndex: Int? = null
     private var isPainting = false
 
-    fun onTouch(x: Float, y: Float, width: Int, height: Int, triangulatedVertices: FloatArray) {
+    fun onTouch(prevX: Float, prevY: Float, x: Float, y: Float, width: Int, height: Int, triangulatedVertices: FloatArray) {
         val (glX, glY) = CoordUtils.screenToGL(x, y, width, height)
 
         selectedVertexIndex?.let { idx ->
@@ -37,8 +38,13 @@ class TouchHandler(
 
         if (PolygonTriangulator.isPointInsideTriangulation(glX, glY, triangulatedVertices)) {
             isPainting = true
-            onPaintRequest(glX, glY)
+            val (prevGlX, prevGlY) = CoordUtils.screenToGL(prevX, prevY, width, height)
+            onPaintRequest(prevGlX, prevGlY, glX, glY)
         }
+    }
+
+    fun setLastTouchedPoint(x: Float, y: Float) {
+
     }
 
     fun onTouchUp() {

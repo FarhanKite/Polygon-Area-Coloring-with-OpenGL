@@ -10,12 +10,17 @@ class BrushStamper(
     private val colorUniform: Int,
     private val hardnessUniform: Int,
     private val opacityUniform: Int,
+    private val prevPointUniform: Int,
+    private val curPointUniform: Int,
+    private val brushRadius: Int,
     private val programId: Int
 ) {
 
     private val floatSize = 4
 
     fun stamp(
+        prevGlX: Float,
+        prevGlY: Float,
         glX: Float,
         glY: Float,
         viewModel: PolygonViewModel,

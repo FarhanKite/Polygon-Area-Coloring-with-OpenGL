@@ -28,6 +28,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val toolMode by viewModel.toolMode.collectAsState()
+            var prevX: Float? = null
+            var prevY: Float? = null
 
             Box(modifier = Modifier.fillMaxSize()) {
                 AndroidView(
@@ -45,14 +47,20 @@ class MainActivity : ComponentActivity() {
                             renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
                             setOnTouchListener { _, event ->
+                                performClick()
+
                                 val x = event.x
                                 val y = event.y
                                 when (event.action) {
                                     MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                                        renderer.handleTouch(x, y, width, height)
+                                        renderer.handleTouch(prevX ?: x, prevY ?: y, x, y, width, height)
+                                        prevX = x
+                                        prevY = y
                                     }
                                     MotionEvent.ACTION_UP -> {
                                         renderer.resetTouchedVertexIndex()
+                                        prevX = null
+                                        prevY = null
                                     }
                                 }
                                 true
