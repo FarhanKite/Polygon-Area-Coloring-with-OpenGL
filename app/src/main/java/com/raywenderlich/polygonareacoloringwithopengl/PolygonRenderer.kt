@@ -19,7 +19,6 @@ class PolygonRenderer(
     private val viewModel: PolygonViewModel
 ) : GLSurfaceView.Renderer {
 
-    // GL handles
     private var polygonProgram = 0
     private var polyPositionHandle = 0
     private var polyColorHandle = 0
@@ -29,13 +28,11 @@ class PolygonRenderer(
     private var blitTexCoordHandle = 0
     private var blitSamplerHandle = 0
 
-    // Buffers
     private lateinit var vertexBuffer: FloatBuffer
     private lateinit var triangleBuffer: FloatBuffer
     private var triangulatedVertices = FloatArray(0)
     private lateinit var fullScreenQuadBuffer: FloatBuffer
 
-    // Modules
     private val brushMaskFbo = BrushMaskFbo()
     private lateinit var brushStamper: BrushStamper
     private lateinit var touchHandler: TouchHandler
@@ -71,6 +68,11 @@ class PolygonRenderer(
                 glSurfaceView?.queueEvent {
                     brushStamper.stamp(glX, glY, viewModel, brushMaskFbo, surfaceWidth, surfaceHeight)
                 }
+            },
+            onStrokeEnded = {
+                glSurfaceView?.queueEvent {
+                    brushMaskFbo.pushSnapshot(surfaceWidth, surfaceHeight)
+                }
             }
         )
     }
@@ -101,13 +103,16 @@ class PolygonRenderer(
         brushMaskFbo.savePixels(surfaceWidth, surfaceHeight)
     }
 
+    fun undo() {
+        brushMaskFbo.undo(surfaceWidth, surfaceHeight)
+    }
+
     private fun drawBackground() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
         glUseProgram(polygonProgram)
 
-        // colorless polygon
         glEnable(GL_STENCIL_TEST)
         glStencilFunc(GL_ALWAYS, 1, 0xFF)
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
@@ -118,7 +123,6 @@ class PolygonRenderer(
         glDrawArrays(GL_TRIANGLES, 0, triangulatedVertices.size / 2)
         glDisableVertexAttribArray(polyPositionHandle)
 
-        // light gray polygon
         glStencilFunc(GL_EQUAL, 1, 0xFF)
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP)
         glColorMask(true, true, true, true)

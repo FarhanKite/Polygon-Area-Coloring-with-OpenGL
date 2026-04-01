@@ -8,7 +8,8 @@ import kotlin.math.sqrt
 
 class TouchHandler(
     private val onVertexMoved: (triangulatedVertices: FloatArray) -> Unit,
-    private val onPaintRequest: (glX: Float, glY: Float) -> Unit
+    private val onPaintRequest: (glX: Float, glY: Float) -> Unit,
+    private val onStrokeEnded: () -> Unit
 ) {
 
     private var selectedVertexIndex: Int? = null
@@ -41,6 +42,7 @@ class TouchHandler(
     }
 
     fun onTouchUp() {
+        if (isPainting) onStrokeEnded()
         selectedVertexIndex = null
         isPainting = false
     }

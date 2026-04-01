@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
                             renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
-                            setOnTouchListener { v, event ->
+                            setOnTouchListener { _, event ->
                                 val x = event.x
                                 val y = event.y
                                 when (event.action) {
@@ -62,8 +62,9 @@ class MainActivity : ComponentActivity() {
                 )
 
                 BrushEraseToolbar(
-                    selectedMode   = toolMode,
+                    selectedMode = toolMode,
                     onModeSelected = viewModel::selectTool,
+                    onUndo = { glSurfaceView.queueEvent { renderer.undo() } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomCenter)

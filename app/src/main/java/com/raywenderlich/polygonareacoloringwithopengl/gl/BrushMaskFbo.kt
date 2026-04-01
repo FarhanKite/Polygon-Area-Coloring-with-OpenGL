@@ -14,6 +14,8 @@ class BrushMaskFbo {
     private var savedPixels: ByteBuffer? = null
     private var pixelsSaved = false
 
+    private val snapshots = ArrayDeque<ByteBuffer>()
+
     fun create(width: Int, height: Int) {
         release()
 
@@ -45,6 +47,9 @@ class BrushMaskFbo {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glClearColor(0f, 0f, 0f, 1f)
+
+        snapshots.clear()
+        pushSnapshot(width, height)
     }
 
     fun release() {
@@ -73,5 +78,32 @@ class BrushMaskFbo {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
         glBindTexture(GL_TEXTURE_2D, 0)
         pixelsSaved = false
+    }
+
+    fun pushSnapshot(width: Int, height: Int) {
+        if (fboId == 0 || width == 0 || height == 0) return
+        val buffer = ByteBuffer
+            .allocateDirect(width * height * 4)
+            .order(ByteOrder.nativeOrder())
+        glBindFramebuffer(GL_FRAMEBUFFER, fboId)
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        buffer.position(0)
+        if (snapshots.size >= MAX_UNDO_STEPS) snapshots.removeFirst()
+        snapshots.addLast(buffer)
+    }
+
+    fun undo(width: Int, height: Int) {
+        if (snapshots.size <= 1) return
+        snapshots.removeLast()
+        val pixels = snapshots.last()
+        pixels.position(0)
+        glBindTexture(GL_TEXTURE_2D, textureId)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+        glBindTexture(GL_TEXTURE_2D, 0)
+    }
+
+    companion object {
+        private const val MAX_UNDO_STEPS = 10
     }
 }

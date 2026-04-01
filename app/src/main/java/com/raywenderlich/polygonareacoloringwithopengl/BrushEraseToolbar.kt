@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -19,13 +20,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun BrushEraseToolbar(
     selectedMode: ToolMode,
     onModeSelected: (ToolMode) -> Unit,
+    onUndo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -36,7 +38,7 @@ fun BrushEraseToolbar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         ToolButton(
-            label = "Brush",
+            label = "",
             icon = Icons.Filled.Edit,
             isSelected = selectedMode == ToolMode.BRUSH,
             onClick = { onModeSelected(ToolMode.BRUSH) },
@@ -44,11 +46,19 @@ fun BrushEraseToolbar(
         )
 
         ToolButton(
-            label      = "Erase",
-            icon       = Icons.Filled.AutoFixOff,
+            label = "",
+            icon = Icons.Filled.AutoFixOff,
             isSelected = selectedMode == ToolMode.ERASE,
-            onClick    = { onModeSelected(ToolMode.ERASE) },
-            modifier   = Modifier.weight(1f)
+            onClick = { onModeSelected(ToolMode.ERASE) },
+            modifier = Modifier.weight(1f)
+        )
+
+        ToolButton(
+            label = "",
+            icon = Icons.Filled.Undo,
+            isSelected = false,
+            onClick = onUndo,
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -62,6 +72,18 @@ fun ToolButton(
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(50)
+    val content: @Composable () -> Unit = {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = label,
+            modifier = Modifier.padding(start = 8.dp),
+            style = MaterialTheme.typography.labelLarge
+        )
+    }
 
     if (isSelected) {
         Button(
@@ -71,19 +93,9 @@ fun ToolButton(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ),
-            modifier = modifier.height(48.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = label,
-                modifier = Modifier.padding(start = 8.dp),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
+            modifier = modifier.height(48.dp),
+            content = { content() }
+        )
     } else {
         OutlinedButton(
             onClick = onClick,
@@ -92,18 +104,8 @@ fun ToolButton(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.onSurface
             ),
-            modifier = modifier.height(48.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = label,
-                modifier = Modifier.padding(start = 8.dp),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
+            modifier = modifier.height(48.dp),
+            content = { content() }
+        )
     }
 }
