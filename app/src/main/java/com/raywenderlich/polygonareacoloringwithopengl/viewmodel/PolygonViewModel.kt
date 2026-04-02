@@ -11,7 +11,7 @@ class PolygonViewModel : ViewModel() {
     private val _toolMode = MutableStateFlow(ToolMode.BRUSH)
     val toolMode: StateFlow<ToolMode> = _toolMode.asStateFlow()
 
-    val brushRadius  = 0.06f
+    val brushRadius  = 0.1f
     val brushHardness = 1.0f
     val brushOpacity  = 1.0f   // 0.0 = transparent  ..  1.0 = fully opaque
 

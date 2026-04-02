@@ -28,12 +28,11 @@ class BrushStamper(
         surfaceWidth: Int,
         surfaceHeight: Int
     ) {
-        val r = viewModel.brushRadius
         val quadData = floatArrayOf(
-            glX - r, glY - r, 0f, 0f,
-            glX + r, glY - r, 1f, 0f,
-            glX - r, glY + r, 0f, 1f,
-            glX + r, glY + r, 1f, 1f
+            -1f, -1f, 0f, 0f,
+            1f, -1f, 1f, 0f,
+            -1f,  1f, 0f, 1f,
+            1f,  1f, 1f, 1f
         )
         val quadBuffer = GlBufferUtils.createFloatBuffer(quadData)
 
@@ -47,10 +46,18 @@ class BrushStamper(
         glUseProgram(programId)
         glEnable(GL_BLEND)
 
+        val maskUniform = glGetUniformLocation(programId, "u_mask")
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, fbo.textureId)  // read current FBO texture
+        glUniform1i(maskUniform, 0)
+
         val color = viewModel.brushColor
         glUniform4f(colorUniform, color[0], color[1], color[2], color[3])
         glUniform1f(hardnessUniform, viewModel.brushHardness)
         glUniform1f(opacityUniform, viewModel.brushOpacity)
+        glUniform2f(prevPointUniform, prevGlX, prevGlY)
+        glUniform2f(curPointUniform, glX, glY)
+        glUniform1f(brushRadius, viewModel.brushRadius)
 
         if (viewModel.toolMode.value == ToolMode.ERASE) {
             glBlendFuncSeparate(GL_ZERO, GL_ONE, GL_ZERO, GL_ONE_MINUS_SRC_ALPHA)
