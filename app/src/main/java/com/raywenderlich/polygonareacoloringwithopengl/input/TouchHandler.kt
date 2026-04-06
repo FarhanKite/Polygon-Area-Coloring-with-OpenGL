@@ -1,26 +1,32 @@
 package com.raywenderlich.polygonareacoloringwithopengl.input
 
-import android.R.attr.x
 import com.raywenderlich.polygonareacoloringwithopengl.data.PolygonData.vertices
 import com.raywenderlich.polygonareacoloringwithopengl.geometry.PolygonTriangulator
 import com.raywenderlich.polygonareacoloringwithopengl.gl.CoordUtils
 import kotlin.math.pow
 import kotlin.math.sqrt
+import com.raywenderlich.polygonareacoloringwithopengl.viewmodel.PolygonViewModel
 
 class TouchHandler(
     private val onVertexMoved: (triangulatedVertices: FloatArray) -> Unit,
     private val onPaintRequest: (prevGlX: Float, prevGlY: Float, glX: Float, glY: Float) -> Unit,
-    private val onStrokeEnded: () -> Unit
+    private val onStrokeEnded: () -> Unit,
+    private val viewModel: PolygonViewModel
 ) {
 
     private var selectedVertexIndex: Int? = null
     private var isPainting = false
 
-    fun onTouch(prevX: Float, prevY: Float, x: Float, y: Float, width: Int, height: Int, triangulatedVertices: FloatArray) {
+    fun onTouch(
+        prevX: Float, prevY: Float,
+        x: Float, y: Float,
+        width: Int, height: Int,
+        triangulatedVertices: FloatArray
+    ) {
         val (glX, glY) = CoordUtils.screenToGL(x, y, width, height)
 
         selectedVertexIndex?.let { idx ->
-            vertices[idx] = glX
+            vertices[idx]     = glX
             vertices[idx + 1] = glY
             onVertexMoved(PolygonTriangulator.triangulate(vertices))
             return
@@ -39,12 +45,9 @@ class TouchHandler(
         if (PolygonTriangulator.isPointInsideTriangulation(glX, glY, triangulatedVertices)) {
             isPainting = true
             val (prevGlX, prevGlY) = CoordUtils.screenToGL(prevX, prevY, width, height)
+            // BrushStamper handles all interpolation internally now
             onPaintRequest(prevGlX, prevGlY, glX, glY)
         }
-    }
-
-    fun setLastTouchedPoint(x: Float, y: Float) {
-
     }
 
     fun onTouchUp() {

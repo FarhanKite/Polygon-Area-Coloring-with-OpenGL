@@ -29,6 +29,7 @@ class BrushMaskFbo {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glBindTexture(GL_TEXTURE_2D, 0)
 
         val fboIds = IntArray(1)
         glGenFramebuffers(1, fboIds, 0)
@@ -53,8 +54,8 @@ class BrushMaskFbo {
     }
 
     fun release() {
-        if (fboId != 0) { glDeleteFramebuffers(1, intArrayOf(fboId), 0); fboId = 0 }
-        if (textureId != 0) { glDeleteTextures(1, intArrayOf(textureId), 0); textureId = 0 }
+        if (fboId != 0)     { glDeleteFramebuffers(1, intArrayOf(fboId), 0);      fboId = 0 }
+        if (textureId != 0) { glDeleteTextures(1, intArrayOf(textureId), 0);       textureId = 0 }
     }
 
     fun savePixels(width: Int, height: Int) {

@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.raywenderlich.polygonareacoloringwithopengl.viewmodel.PolygonViewModel
+import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
 
@@ -53,9 +54,15 @@ class MainActivity : ComponentActivity() {
                                 val y = event.y
                                 when (event.action) {
                                     MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                                        renderer.handleTouch(prevX ?: x, prevY ?: y, x, y, width, height)
-                                        prevX = x
-                                        prevY = y
+                                        var dist: Float = 100.0f
+                                        if (prevX != null && prevY != null) {
+                                            dist = sqrt((prevX!! - x) * (prevX!! - x) + (prevY!! - y) * (prevY!! - y))
+                                        }
+                                        if (dist >= 8.0) {
+                                            renderer.handleTouch(prevX ?: x, prevY ?: y, x, y, width, height)
+                                            prevX = x
+                                            prevY = y
+                                        }
                                     }
                                     MotionEvent.ACTION_UP -> {
                                         renderer.resetTouchedVertexIndex()

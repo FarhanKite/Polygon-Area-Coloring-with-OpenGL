@@ -37,8 +37,8 @@ class PolygonRenderer(
     private lateinit var brushStamper: BrushStamper
     private lateinit var touchHandler: TouchHandler
 
-    private var surfaceWidth = 1
-    private var surfaceHeight = 1
+    @Volatile private var surfaceWidth = 1
+    @Volatile private var surfaceHeight = 1
 
     private var glSurfaceView: GLSurfaceView? = null
 
@@ -64,16 +64,27 @@ class PolygonRenderer(
                 vertexBuffer.put(vertices).position(0)
                 triangleBuffer = GlBufferUtils.createFloatBuffer(triangulatedVertices)
             },
+//            onPaintRequest = { prevGlX, prevGlY, glX, glY ->
+//                glSurfaceView?.queueEvent {
+//                    brushStamper.stamp(prevGlX, prevGlY, glX, glY, viewModel, brushMaskFbo, surfaceWidth, surfaceHeight)
+//                }
+//            },
             onPaintRequest = { prevGlX, prevGlY, glX, glY ->
                 glSurfaceView?.queueEvent {
+                    // Convert pixel radius to GL space (width-based)
+                    val glRadius = viewModel.brushRadiusPx / surfaceWidth
                     brushStamper.stamp(prevGlX, prevGlY, glX, glY, viewModel, brushMaskFbo, surfaceWidth, surfaceHeight)
                 }
             },
             onStrokeEnded = {
+                // Capture on calling thread (UI thread) before dispatching to GL thread
+                val w = surfaceWidth
+                val h = surfaceHeight
                 glSurfaceView?.queueEvent {
-                    brushMaskFbo.pushSnapshot(surfaceWidth, surfaceHeight)
+                    brushMaskFbo.pushSnapshot(w, h)
                 }
-            }
+            },
+            viewModel
         )
     }
 
@@ -113,6 +124,7 @@ class PolygonRenderer(
 
         glUseProgram(polygonProgram)
 
+        // Pass 1: write stencil for the polygon area
         glEnable(GL_STENCIL_TEST)
         glStencilFunc(GL_ALWAYS, 1, 0xFF)
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
@@ -123,6 +135,7 @@ class PolygonRenderer(
         glDrawArrays(GL_TRIANGLES, 0, triangulatedVertices.size / 2)
         glDisableVertexAttribArray(polyPositionHandle)
 
+        // Pass 2: draw polygon fill only where stencil == 1
         glStencilFunc(GL_EQUAL, 1, 0xFF)
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP)
         glColorMask(true, true, true, true)
@@ -135,8 +148,13 @@ class PolygonRenderer(
     }
 
     private fun drawMask() {
+        glEnable(GL_STENCIL_TEST)
+        glStencilFunc(GL_EQUAL, 1, 0xFF)
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP)
+
         glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        // Premultiplied blit — correctly composites FBO texture over background
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
 
         glUseProgram(blitProgram)
         glActiveTexture(GL_TEXTURE0)
@@ -178,21 +196,38 @@ class PolygonRenderer(
         polyColorHandle = glGetUniformLocation(polygonProgram, "uColor")
     }
 
+//    private fun setupBrushProgram() {
+//        val brushProgram = GlBufferUtils.buildProgram(
+//            ShaderUtils.loadShaderFromAssets(context, "brush_vertex_shader.glsl"),
+//            ShaderUtils.loadShaderFromAssets(context, "brush_fragment_shader.glsl")
+//        )
+//        brushStamper = BrushStamper(
+//            positionHandle    = glGetAttribLocation(brushProgram, "aPosition"),
+//            texCoordHandle    = glGetAttribLocation(brushProgram, "aTexCoord"),
+//            colorUniform      = glGetUniformLocation(brushProgram, "u_color"),
+//            hardnessUniform   = glGetUniformLocation(brushProgram, "u_hardness"),
+//            opacityUniform    = glGetUniformLocation(brushProgram, "u_opacity"),
+//            prevPointUniform  = glGetUniformLocation(brushProgram, "u_prevPoint"),
+//            curPointUniform   = glGetUniformLocation(brushProgram, "u_currPoint"),
+//            brushRadiusUniform = glGetUniformLocation(brushProgram, "u_brushRadius"),
+//            programId         = brushProgram
+//        )
+//    }
+
+
     private fun setupBrushProgram() {
         val brushProgram = GlBufferUtils.buildProgram(
             ShaderUtils.loadShaderFromAssets(context, "brush_vertex_shader.glsl"),
             ShaderUtils.loadShaderFromAssets(context, "brush_fragment_shader.glsl")
         )
         brushStamper = BrushStamper(
-            positionHandle = glGetAttribLocation(brushProgram, "aPosition"),
-            texCoordHandle = glGetAttribLocation(brushProgram, "aTexCoord"),
-            colorUniform = glGetUniformLocation(brushProgram, "u_color"),
-            hardnessUniform = glGetUniformLocation(brushProgram, "u_hardness"),
-            opacityUniform = glGetUniformLocation(brushProgram, "u_opacity"),
-            prevPointUniform = glGetUniformLocation(brushProgram, "u_prevPoint"),
-            curPointUniform = glGetUniformLocation(brushProgram, "u_currPoint"),
-            brushRadius = glGetUniformLocation(brushProgram, "u_brushRadius"),
-            programId = brushProgram
+            positionHandle    = glGetAttribLocation(brushProgram, "aPosition"),
+            texCoordHandle    = glGetAttribLocation(brushProgram, "aTexCoord"),
+            colorUniform      = glGetUniformLocation(brushProgram, "u_color"),
+            opacityUniform    = glGetUniformLocation(brushProgram, "u_opacity"),
+            centerPointUniform = glGetUniformLocation(brushProgram, "u_centerPoint"),
+            brushRadiusUniform = glGetUniformLocation(brushProgram, "u_brushRadius"),
+            programId         = brushProgram
         )
     }
 
@@ -203,7 +238,7 @@ class PolygonRenderer(
         )
         blitPositionHandle = glGetAttribLocation(blitProgram, "aPosition")
         blitTexCoordHandle = glGetAttribLocation(blitProgram, "aTexCoord")
-        blitSamplerHandle = glGetUniformLocation(blitProgram, "uTexture")
+        blitSamplerHandle  = glGetUniformLocation(blitProgram, "uTexture")
     }
 
     companion object {
