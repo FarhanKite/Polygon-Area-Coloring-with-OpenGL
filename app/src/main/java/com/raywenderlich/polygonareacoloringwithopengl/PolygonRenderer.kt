@@ -64,11 +64,6 @@ class PolygonRenderer(
                 vertexBuffer.put(vertices).position(0)
                 triangleBuffer = GlBufferUtils.createFloatBuffer(triangulatedVertices)
             },
-//            onPaintRequest = { prevGlX, prevGlY, glX, glY ->
-//                glSurfaceView?.queueEvent {
-//                    brushStamper.stamp(prevGlX, prevGlY, glX, glY, viewModel, brushMaskFbo, surfaceWidth, surfaceHeight)
-//                }
-//            },
             onPaintRequest = { prevGlX, prevGlY, glX, glY ->
                 glSurfaceView?.queueEvent {
                     // Convert pixel radius to GL space (width-based)
@@ -196,38 +191,20 @@ class PolygonRenderer(
         polyColorHandle = glGetUniformLocation(polygonProgram, "uColor")
     }
 
-//    private fun setupBrushProgram() {
-//        val brushProgram = GlBufferUtils.buildProgram(
-//            ShaderUtils.loadShaderFromAssets(context, "brush_vertex_shader.glsl"),
-//            ShaderUtils.loadShaderFromAssets(context, "brush_fragment_shader.glsl")
-//        )
-//        brushStamper = BrushStamper(
-//            positionHandle    = glGetAttribLocation(brushProgram, "aPosition"),
-//            texCoordHandle    = glGetAttribLocation(brushProgram, "aTexCoord"),
-//            colorUniform      = glGetUniformLocation(brushProgram, "u_color"),
-//            hardnessUniform   = glGetUniformLocation(brushProgram, "u_hardness"),
-//            opacityUniform    = glGetUniformLocation(brushProgram, "u_opacity"),
-//            prevPointUniform  = glGetUniformLocation(brushProgram, "u_prevPoint"),
-//            curPointUniform   = glGetUniformLocation(brushProgram, "u_currPoint"),
-//            brushRadiusUniform = glGetUniformLocation(brushProgram, "u_brushRadius"),
-//            programId         = brushProgram
-//        )
-//    }
-
-
     private fun setupBrushProgram() {
         val brushProgram = GlBufferUtils.buildProgram(
             ShaderUtils.loadShaderFromAssets(context, "brush_vertex_shader.glsl"),
             ShaderUtils.loadShaderFromAssets(context, "brush_fragment_shader.glsl")
         )
         brushStamper = BrushStamper(
-            positionHandle    = glGetAttribLocation(brushProgram, "aPosition"),
-            texCoordHandle    = glGetAttribLocation(brushProgram, "aTexCoord"),
-            colorUniform      = glGetUniformLocation(brushProgram, "u_color"),
-            opacityUniform    = glGetUniformLocation(brushProgram, "u_opacity"),
+            positionHandle     = glGetAttribLocation(brushProgram, "aPosition"),
+            texCoordHandle     = glGetAttribLocation(brushProgram, "aTexCoord"),
+            colorUniform       = glGetUniformLocation(brushProgram, "u_color"),
+            opacityUniform     = glGetUniformLocation(brushProgram, "u_opacity"),
             centerPointUniform = glGetUniformLocation(brushProgram, "u_centerPoint"),
             brushRadiusUniform = glGetUniformLocation(brushProgram, "u_brushRadius"),
-            programId         = brushProgram
+            resolutionUniform  = glGetUniformLocation(brushProgram, "u_resolution"), // ← add this
+            programId          = brushProgram
         )
     }
 

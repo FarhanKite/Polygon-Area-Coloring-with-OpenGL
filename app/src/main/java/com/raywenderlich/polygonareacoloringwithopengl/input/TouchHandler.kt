@@ -45,7 +45,6 @@ class TouchHandler(
         if (PolygonTriangulator.isPointInsideTriangulation(glX, glY, triangulatedVertices)) {
             isPainting = true
             val (prevGlX, prevGlY) = CoordUtils.screenToGL(prevX, prevY, width, height)
-            // BrushStamper handles all interpolation internally now
             onPaintRequest(prevGlX, prevGlY, glX, glY)
         }
     }

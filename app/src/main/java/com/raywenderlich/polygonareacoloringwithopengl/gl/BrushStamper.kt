@@ -1,8 +1,6 @@
 package com.raywenderlich.polygonareacoloringwithopengl.gl
 
 import android.opengl.GLES20.*
-import android.util.Log.i
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.raywenderlich.polygonareacoloringwithopengl.ToolMode
 import com.raywenderlich.polygonareacoloringwithopengl.viewmodel.PolygonViewModel
 import kotlin.math.*
@@ -14,6 +12,7 @@ class BrushStamper(
     private val opacityUniform: Int,
     private val centerPointUniform: Int,
     private val brushRadiusUniform: Int,
+    private val resolutionUniform: Int,
     private val programId: Int
 ) {
     private val floatSize = 4
@@ -34,7 +33,7 @@ class BrushStamper(
         val dy = glY - prevGlY
         val segmentLength = sqrt(dx * dx + dy * dy)
 
-        val stepSize = glRadius * 0.2f
+        val stepSize = glRadius * 0.18f
         val steps = ((segmentLength / stepSize).toInt()).coerceAtLeast(1)
 
         glBindFramebuffer(GL_FRAMEBUFFER, fbo.fboId)
@@ -44,13 +43,11 @@ class BrushStamper(
         glEnable(GL_BLEND)
 
         if (viewModel.toolMode.value == ToolMode.ERASE) {
-            // Premultiplied erase: punch out alpha and color by coverage
             glBlendFuncSeparate(
                 GL_ZERO, GL_ONE_MINUS_SRC_ALPHA,
                 GL_ZERO, GL_ONE_MINUS_SRC_ALPHA
             )
         } else {
-            // Premultiplied paint: stamps never overwrite each other
             glBlendFuncSeparate(
                 GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
                 GL_ONE, GL_ONE_MINUS_SRC_ALPHA
@@ -61,6 +58,7 @@ class BrushStamper(
         glUniform4f(colorUniform, color[0], color[1], color[2], color[3])
         glUniform1f(opacityUniform, viewModel.brushOpacity)
         glUniform1f(brushRadiusUniform, glRadius)
+        glUniform2f(resolutionUniform, surfaceWidth.toFloat(), surfaceHeight.toFloat())
 
         for (i in 0..steps) {
             val t = i.toFloat() / steps
